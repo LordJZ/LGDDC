@@ -1,0 +1,62 @@
+
+#pragma once
+
+#ifdef LGDDCCISDK_BUILD
+#  define LGDDCCISDK_DLLSPEC __declspec(dllexport)
+#else
+#  define LGDDCCISDK_DLLSPEC __declspec(dllimport)
+#endif
+
+enum _T_E_MONITOR_ERROR {
+};
+
+enum T_E_OPCODE {
+
+	OPCODE_BRIGHTNESS = 16,
+	OPCODE_CONTRAST = 18,
+
+	OPCODE_PICTUREMODE = 21,
+
+	OPCODE_VOLUME = 95,
+
+	// 0-4?
+	OPCODE_RESPONSE_TIME = 247,
+
+	// 2 = Standard
+	// 3 = Extended
+	OPCODE_FREESYNC = 248,
+
+	OPCODE_BLACK_STABILIZER = 249
+};
+
+enum E_PICTUREMODE {
+	PICTUREMODE_READING = 1,
+
+	PICTUREMODE_COLORWEAKNESS = 6,
+
+	PICTUREMODE_DARKROOM1 = 9,
+	PICTUREMODE_DARKROOM2 = 10,
+	PICTUREMODE_CUSTOM = 11,
+
+	PICTUREMODE_RTS = 13,
+	PICTUREMODE_CUSTOMGAME = 14,
+
+	PICTUREMODE_FPS1 = 28,
+	PICTUREMODE_FPS2 = 29,
+
+	PICTUREMODE_PHOTO = 32,
+
+	PICTUREMODE_MOVIE = 48,
+};
+
+class LGDDCCISDK_DLLSPEC CMonitorDDCCISDK {
+public:
+	CMonitorDDCCISDK();
+	~CMonitorDDCCISDK();
+
+	_T_E_MONITOR_ERROR InitializeDDCCIStack(int);
+	_T_E_MONITOR_ERROR UnInitializeDDCCISDK(int);
+
+	_T_E_MONITOR_ERROR GetPropertyWithoutOpcodeVerification(enum  T_E_OPCODE, unsigned short &, unsigned short &);
+	_T_E_MONITOR_ERROR SetPropertyWithoutOpcodeVerification(enum  T_E_OPCODE, unsigned short);
+};
