@@ -7,6 +7,11 @@ void usage() {
 	MessageBox(NULL, TEXT("Usage: LGDDC <property> <value>"), TEXT("Usage"), 0);
 }
 
+void freemon(CMonitorDDCCISDK* mon, int monitorId) {
+	mon->UnInitializeDDCCISDK(monitorId);
+	mon->~CMonitorDDCCISDK();
+}
+
 int CALLBACK WinMain(
 	_In_ HINSTANCE hInstance,
 	_In_ HINSTANCE hPrevInstance,
@@ -27,11 +32,22 @@ int CALLBACK WinMain(
 		return 1;
 	}
 
-	CMonitorDDCCISDK* mon = new (malloc(100000)) CMonitorDDCCISDK;
-	mon->InitializeDDCCIStack(3);
+	void* mem = malloc(100000);
+	CMonitorDDCCISDK* mon = nullptr;
+	int monitorId = 0;
+	do
+	{
+		if (mon) {
+			freemon(mon, monitorId);
+		}
+
+		mon = new (mem) CMonitorDDCCISDK;
+
+	} while (mon->InitializeDDCCIStack(++monitorId) && monitorId < 6);
 
 	mon->SetPropertyWithoutOpcodeVerification((T_E_OPCODE)prop, val);
 
-	mon->UnInitializeDDCCISDK(3);
-	mon->~CMonitorDDCCISDK();
+	freemon(mon, monitorId);
+
+	return 0;
 }
