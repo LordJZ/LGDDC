@@ -12,6 +12,17 @@ void freemon(CMonitorDDCCISDK* mon, int monitorId) {
 	mon->~CMonitorDDCCISDK();
 }
 
+CMonitorDDCCISDK* trymon(void* mem, int monitorId) {
+	CMonitorDDCCISDK* mon = new (mem) CMonitorDDCCISDK;
+
+	if (mon->InitializeDDCCIStack(++monitorId)) {
+		freemon(mon, monitorId);
+		return nullptr;
+	}
+
+	return mon;
+}
+
 int CALLBACK WinMain(
 	_In_ HINSTANCE hInstance,
 	_In_ HINSTANCE hPrevInstance,
@@ -33,17 +44,28 @@ int CALLBACK WinMain(
 	}
 
 	void* mem = malloc(100000);
+
+	HKEY key;
+	RegCreateKeyEx(HKEY_CURRENT_USER, TEXT("SOFTWARE\\LGDDC"), 0, NULL,
+		REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
+
+	DWORD monitorId = 0;
+	DWORD sz = sizeof(monitorId);
+	RegGetValue(key, NULL, TEXT("MonitorId"), RRF_RT_REG_DWORD, NULL, &monitorId, &sz);
+
 	CMonitorDDCCISDK* mon = nullptr;
-	int monitorId = 0;
-	do
-	{
-		if (mon) {
-			freemon(mon, monitorId);
+	if (!(mon = trymon(mem, monitorId))) {
+		monitorId = 0;
+
+		while (!(mon = trymon(mem, monitorId))) {
+			if (++monitorId >= 6)
+				return 1;
 		}
 
-		mon = new (mem) CMonitorDDCCISDK;
+		RegSetValueEx(key, TEXT("MonitorId"), 0, REG_DWORD, (const BYTE*)(void*)&monitorId, sizeof(monitorId));
+	}
 
-	} while (mon->InitializeDDCCIStack(++monitorId) && monitorId < 6);
+	RegCloseKey(key);
 
 	mon->SetPropertyWithoutOpcodeVerification((T_E_OPCODE)prop, val);
 
